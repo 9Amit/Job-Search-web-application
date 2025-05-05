@@ -1,6 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  Timestamp,
+} from "firebase/firestore";
 
 const Admin = () => {
   const [form, setForm] = useState({
@@ -10,8 +18,21 @@ const Admin = () => {
     type: "",
     description: "",
   });
-
   const [success, setSuccess] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [editingJob, setEditingJob] = useState(null);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const querySnapshot = await getDocs(collection(db, "jobs"));
+      const jobList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setJobs(jobList);
+    };
+    fetchJobs();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,11 +41,19 @@ const Admin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, "jobs"), {
-        ...form,
-        createdAt: Timestamp.now(),
-      });
-      setSuccess("Job posted successfully!");
+      if (editingJob) {
+        // Edit existing job
+        const jobRef = doc(db, "jobs", editingJob.id);
+        await updateDoc(jobRef, { ...form, updatedAt: Timestamp.now() });
+        setSuccess("Job updated successfully!");
+      } else {
+        // Add new job
+        await addDoc(collection(db, "jobs"), {
+          ...form,
+          createdAt: Timestamp.now(),
+        });
+        setSuccess("Job posted successfully!");
+      }
       setForm({
         title: "",
         company: "",
@@ -32,15 +61,41 @@ const Admin = () => {
         type: "",
         description: "",
       });
+      setEditingJob(null); // Reset editing state
     } catch (err) {
-      console.error("Error adding job:", err);
-      setSuccess("Failed to post job.");
+      console.error("Error adding/updating job:", err);
+      setSuccess("Failed to post/update job.");
+    }
+  };
+
+  const handleEdit = (job) => {
+    setForm({
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      type: job.type,
+      description: job.description,
+    });
+    setEditingJob(job);
+  };
+
+  const handleDelete = async (jobId) => {
+    try {
+      const jobRef = doc(db, "jobs", jobId);
+      await deleteDoc(jobRef);
+      setSuccess("Job removed successfully!");
+      setJobs(jobs.filter((job) => job.id !== jobId)); // Remove job from state
+    } catch (err) {
+      console.error("Error deleting job:", err);
+      setSuccess("Failed to remove job.");
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Post a Job</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {editingJob ? "Edit Job" : "Post a Job"}
+      </h1>
 
       {success && <p className="mb-4 text-green-600">{success}</p>}
 
@@ -88,9 +143,45 @@ const Admin = () => {
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          Post Job
+          {editingJob ? "Update Job" : "Post Job"}
         </button>
       </form>
+
+      <h2 className="text-xl font-semibold mt-6">Current Job Listings</h2>
+      {jobs.length === 0 ? (
+        <p>No jobs available.</p>
+      ) : (
+        <ul className="mt-4 space-y-4">
+          {jobs.map((job) => (
+            <li
+              key={job.id}
+              className="p-4 border rounded-md flex justify-between items-center"
+            >
+              <div>
+                <h3 className="font-semibold">{job.title}</h3>
+                <p>{job.company}</p>
+                <p>{job.location}</p>
+                <p>{job.type}</p>
+                <p>{job.description}</p>
+              </div>
+              <div className="space-x-4">
+                <button
+                  onClick={() => handleEdit(job)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(job.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
