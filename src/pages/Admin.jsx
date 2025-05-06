@@ -17,6 +17,7 @@ const Admin = () => {
     location: "",
     type: "",
     description: "",
+    applyLink: "",
   });
   const [success, setSuccess] = useState("");
   const [jobs, setJobs] = useState([]);
@@ -42,26 +43,27 @@ const Admin = () => {
     e.preventDefault();
     try {
       if (editingJob) {
-        // Edit existing job
         const jobRef = doc(db, "jobs", editingJob.id);
         await updateDoc(jobRef, { ...form, updatedAt: Timestamp.now() });
         setSuccess("Job updated successfully!");
       } else {
-        // Add new job
         await addDoc(collection(db, "jobs"), {
           ...form,
           createdAt: Timestamp.now(),
         });
         setSuccess("Job posted successfully!");
       }
+
+      // Reset form and editing state
       setForm({
         title: "",
         company: "",
         location: "",
         type: "",
         description: "",
+        applyLink: "",
       });
-      setEditingJob(null); // Reset editing state
+      setEditingJob(null);
     } catch (err) {
       console.error("Error adding/updating job:", err);
       setSuccess("Failed to post/update job.");
@@ -75,6 +77,7 @@ const Admin = () => {
       location: job.location,
       type: job.type,
       description: job.description,
+      applyLink: job.applyLink || "",
     });
     setEditingJob(job);
   };
@@ -84,7 +87,7 @@ const Admin = () => {
       const jobRef = doc(db, "jobs", jobId);
       await deleteDoc(jobRef);
       setSuccess("Job removed successfully!");
-      setJobs(jobs.filter((job) => job.id !== jobId)); // Remove job from state
+      setJobs(jobs.filter((job) => job.id !== jobId));
     } catch (err) {
       console.error("Error deleting job:", err);
       setSuccess("Failed to remove job.");
@@ -139,6 +142,13 @@ const Admin = () => {
           className="w-full border p-2 rounded"
           rows={4}
         />
+        <input
+          name="applyLink"
+          placeholder="Application Link or Email"
+          value={form.applyLink}
+          onChange={handleChange}
+          className="w-full border p-2 rounded"
+        />
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -155,16 +165,29 @@ const Admin = () => {
           {jobs.map((job) => (
             <li
               key={job.id}
-              className="p-4 border rounded-md flex justify-between items-center"
+              className="p-4 border rounded-md flex justify-between items-start gap-4"
             >
-              <div>
-                <h3 className="font-semibold">{job.title}</h3>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">{job.title}</h3>
                 <p>{job.company}</p>
                 <p>{job.location}</p>
                 <p>{job.type}</p>
-                <p>{job.description}</p>
+                <p className="mt-2">{job.description}</p>
+                {job.applyLink && (
+                  <p className="text-sm mt-2">
+                    Apply:{" "}
+                    <a
+                      href={job.applyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      {job.applyLink}
+                    </a>
+                  </p>
+                )}
               </div>
-              <div className="space-x-4">
+              <div className="space-x-2 mt-2">
                 <button
                   onClick={() => handleEdit(job)}
                   className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
