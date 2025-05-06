@@ -48,9 +48,21 @@ const JobDetail = () => {
       <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded mb-4">
         {job.type}
       </span>
-      <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+      <p className="text-gray-800 leading-relaxed whitespace-pre-line">
         {job.description}
       </p>
+      {job.applyLink && (
+        <p className="mt-4">
+          <a
+            href={job.applyLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            Apply Here
+          </a>
+        </p>
+      )}
 
       <Link
         to="/"
