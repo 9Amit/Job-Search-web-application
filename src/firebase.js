@@ -3,20 +3,17 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDcraJv1fjbfR1rniUH32w7frGSfqQ7JJ0",
-  authDomain: "job-website-abbcc.firebaseapp.com",
-  projectId: "job-website-abbcc",
-  storageBucket: "job-website-abbcc.firebasestorage.app",
-  messagingSenderId: "690449655106",
-  appId: "1:690449655106:web:16732460d78ab04b55d4db",
-  measurementId: "G-TMCJBW176P"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Export Firestore and Auth
+export { app };
 export const db = getFirestore(app);
 export const auth = getAuth(app);
